@@ -63,13 +63,14 @@ input,select{font:inherit;color:var(--tx);background:var(--card);border:1px soli
     <h1 style="text-align:center;font-size:20px">انبار داری گرین دیلی</h1>
     <div class="f"><label>نام کاربری</label><input id="lu" autocomplete="username" autocapitalize="none" dir="ltr"></div>
     <div class="f"><label>رمز عبور</label><input id="lp" type="password" autocomplete="current-password" dir="ltr"></div>
+    <div class="f"><label>نام شما (در تاریخچه ثبت می‌شود)</label><input id="ln" autocomplete="name" placeholder="مثلاً علی"></div>
     <div id="le" style="color:var(--warn);font-size:13px;min-height:18px;margin-bottom:6px"></div>
     <div class="btns"><button class="p" id="lb">ورود</button></div>
   </div>
 </div>
 <div class="wrap">
   <h1>📦 انبار داری گرین دیلی</h1>
-  <div class="sub">مشترک بین اعضای تیم · تغییرات لحظه‌ای دیده می‌شود · <a id="lo" href="#" onclick="return false" style="color:var(--ac)">خروج</a></div>
+  <div class="sub">مشترک بین اعضای تیم · تغییرات لحظه‌ای دیده می‌شود · <b id="who"></b> · <a id="lo" href="#" onclick="return false" style="color:var(--ac)">خروج</a></div>
   <div id="msg"></div>
   <div class="tabs"><button class="tab on" data-v="stock">انبار</button><button class="tab" data-v="hist">تاریخچه</button></div>
 
@@ -132,6 +133,7 @@ const fa=n=>Number(n).toLocaleString('fa-IR'), $=id=>document.getElementById(id)
 const fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('fa-IR',{year:'numeric',month:'long',day:'numeric'})}catch(e){return s}};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d.innerHTML};
+let me='';
 let pc=null,mc=null,items=[],moves=[],cat='all',editId=null,mv=null;
 const msg=t=>{const m=$('msg');m.textContent=t;m.style.display=t?'block':'none'};
 
@@ -151,7 +153,7 @@ function render(){
 function renderHist(){
   const q=$('hq').value.trim();
   const v=moves.filter(m=>!q||m.name.includes(q)||m.note.includes(q)).sort((a,b)=>(b.date.localeCompare(a.date))||(b.ts-a.ts));
-  $('hlist').innerHTML=v.length?v.map(m=>'<div class="h '+m.type+'"><div class="t"><span>'+esc(m.name)+'</span><span>'+(m.type==='out'?'−':'＋')+fa(m.amount)+' '+esc(m.unit)+'</span></div><div class="meta">'+fd(m.date)+(m.cat?' · '+esc(m.cat):'')+' · موجودی بعد: '+fa(m.after)+'</div>'+(m.note?'<div class="n">'+esc(m.note)+'</div>':'')+'</div>').join(''):'<div class="empty">هنوز تغییری ثبت نشده.</div>';
+  $('hlist').innerHTML=v.length?v.map(m=>'<div class="h '+m.type+'"><div class="t"><span>'+esc(m.name)+'</span><span>'+(m.type==='out'?'−':'＋')+fa(m.amount)+' '+esc(m.unit)+'</span></div><div class="meta">'+(m.by?'<b>'+(m.type==='out'?'برداشت':'ورود')+' توسط '+esc(m.by)+'</b> · ':'')+fd(m.date)+(m.cat?' · '+esc(m.cat):'')+' · موجودی بعد: '+fa(m.after)+'</div>'+(m.note?'<div class="n">'+esc(m.note)+'</div>':'')+'</div>').join(''):'<div class="empty">هنوز تغییری ثبت نشده.</div>';
 }
 
 function openMove(id,type){
@@ -172,7 +174,7 @@ async function saveMove(){
   $('msheet').classList.remove('open');mv=null;
   try{
     await pc.doc(it.id).update({qty:after,updatedAt:Date.now()});
-    await mc.doc().set({pid:it.id,name:it.name,cat:it.cat,unit:it.unit,type,amount:a,after,date,note,ts:Date.now()});
+    await mc.doc().set({pid:it.id,name:it.name,cat:it.cat,unit:it.unit,type,amount:a,after,date,note,by:me,ts:Date.now()});
   }catch(e){msg('ذخیره نشد. دسترسی «Contributor» یا بالاتر لازم است.')}
 }
 
@@ -221,24 +223,25 @@ function startApp(){
     firebase.initializeApp(firebaseConfig);const db=firebase.firestore();
     pc=db.collection('products');mc=db.collection('moves');
     pc.onSnapshot(s=>{items=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',qty:+x.qty||0,min:+x.min||0,unit:x.unit||'عدد',note:x.note||''}});msg('');render()},()=>msg('خطا در بارگذاری داده‌ها. قوانین (Rules) دیتابیس را بررسی کنید.'));
-    mc.onSnapshot(s=>{moves=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',unit:x.unit||'',type:x.type==='in'?'in':'out',amount:+x.amount||0,after:+x.after||0,date:x.date||'',note:x.note||'',ts:+x.ts||0}});renderHist()},()=>{});
+    mc.onSnapshot(s=>{moves=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',unit:x.unit||'',type:x.type==='in'?'in':'out',amount:+x.amount||0,after:+x.after||0,date:x.date||'',note:x.note||'',by:x.by||'',ts:+x.ts||0}});renderHist()},()=>{});
   }catch(e){msg('اتصال به دیتابیس ممکن نشد.')}
 }
 const AUTH_HASH="6c78056f59a8906922865033621742164a1fba6b42a29304a22b4432a9bd8df9";
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function unlock(){$('login').style.display='none';startApp()}
+function unlock(){$('login').style.display='none';$('who').textContent=me;startApp()}
 async function tryLogin(){
-  const u=$('lu').value.trim().toLowerCase(),p=$('lp').value;
+  const u=$('lu').value.trim().toLowerCase(),p=$('lp').value,nm=$('ln').value.trim();
+  if(!nm){$('le').textContent='لطفاً نام خود را وارد کنید.';return}
   try{
-    if(await sha(u+':'+p)===AUTH_HASH){try{localStorage.setItem('gd_ok',AUTH_HASH)}catch(e){}$('le').textContent='';unlock()}
+    if(await sha(u+':'+p)===AUTH_HASH){me=nm;try{localStorage.setItem('gd_ok',AUTH_HASH);localStorage.setItem('gd_name',nm)}catch(e){}$('le').textContent='';unlock()}
     else $('le').textContent='نام کاربری یا رمز اشتباه است.';
   }catch(e){$('le').textContent='این مرورگر پشتیبانی نمی‌کند. از Safari یا Chrome استفاده کنید.'}
 }
 function logout(){try{localStorage.removeItem('gd_ok')}catch(e){}location.reload()}
 $('lb').onclick=tryLogin;$('lp').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
 $('lo').onclick=logout;
-let ok=false;try{ok=localStorage.getItem('gd_ok')===AUTH_HASH}catch(e){}
-if(ok)unlock();
+let ok=false;try{ok=localStorage.getItem('gd_ok')===AUTH_HASH;me=localStorage.getItem('gd_name')||'';$('ln').value=me}catch(e){}
+if(ok&&me)unlock();
 </script>
 </body>
 </html>
