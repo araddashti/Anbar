@@ -2,9 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-  <link rel="apple-touch-icon" href="IMG_1708.png">
-
-
+<link rel="apple-touch-icon" href="IMG_1708.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="انبار گرین دیلی">
@@ -57,25 +55,44 @@ input,select{font:inherit;color:var(--tx);background:var(--card);border:1px soli
 .btns .p{background:var(--ac);color:var(--acx);border-color:var(--ac)}.btns .d{color:var(--warn);flex:.6}
 .sw{position:relative;background:#c0392b;border-radius:16px;margin-bottom:10px;overflow:hidden}.swl{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#fff;font-weight:600}.sw .item{position:relative;margin-bottom:0;touch-action:pan-y}
 #msg{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px;display:none}
+.full{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:22px;width:100%;max-width:360px}
+.lnk{background:none;border:0;color:var(--ac);font:inherit;font-size:13px;padding:8px 0;width:100%;text-align:center}
+.toast{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));background:#222;color:#fff;border-radius:12px;padding:12px 14px;font-size:14px;z-index:60;display:none}
+.u{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:11px 12px;margin-bottom:8px}
+.u .r{display:flex;gap:8px;margin-top:8px}.u select{padding:8px}
+.u.off{opacity:.55}
 </style>
 </head>
 <body>
-<div id="login" style="position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:22px;width:100%;max-width:360px">
-    <div style="font-size:40px;text-align:center">📦</div>
-    <h1 style="text-align:center;font-size:20px">انبار داری گرین دیلی</h1>
-    <div class="f"><label>نام کاربری</label><input id="lu" autocomplete="username" autocapitalize="none" dir="ltr"></div>
+<div id="gate" class="full"><div class="box">
+  <div style="font-size:40px;text-align:center">📦</div>
+  <h1 style="text-align:center;font-size:20px">انبار داری گرین دیلی</h1>
+  <div id="gl">
+    <div class="f"><label>ایمیل</label><input id="le" type="email" autocomplete="username" autocapitalize="none" dir="ltr"></div>
     <div class="f"><label>رمز عبور</label><input id="lp" type="password" autocomplete="current-password" dir="ltr"></div>
-    <div class="f"><label>نام شما (در تاریخچه ثبت می‌شود)</label><input id="ln" autocomplete="name" placeholder="مثلاً علی"></div>
-    <div id="le" style="color:var(--warn);font-size:13px;min-height:18px;margin-bottom:6px"></div>
+    <div id="lerr" style="color:var(--warn);font-size:13px;min-height:18px;margin-bottom:6px"></div>
     <div class="btns"><button class="p" id="lb">ورود</button></div>
+    <button class="lnk" id="lsu">اولین بار؟ ساخت حساب مدیر کل</button>
   </div>
-</div>
+  <div id="gs" style="display:none">
+    <div class="meta" style="margin:10px 0">هنوز مدیری ثبت نشده. با ساختن این حساب، شما «مدیر کل» می‌شوید.</div>
+    <div class="f"><label>نام شما</label><input id="sn" autocomplete="name"></div>
+    <div id="serr" style="color:var(--warn);font-size:13px;min-height:18px;margin-bottom:6px"></div>
+    <div class="btns"><button class="p" id="sb">ایجاد مدیر کل</button></div>
+    <button class="lnk" onclick="doLogout()">خروج</button>
+  </div>
+  <div id="gp" style="display:none">
+    <div id="gptxt" class="meta" style="margin:12px 0;font-size:14px"></div>
+    <button class="lnk" onclick="doLogout()">خروج</button>
+  </div>
+</div></div>
+
 <div class="wrap">
   <h1>📦 انبار داری گرین دیلی</h1>
-  <div class="sub">مشترک بین اعضای تیم · تغییرات لحظه‌ای دیده می‌شود · <b id="who"></b> · <a id="lo" href="#" onclick="return false" style="color:var(--ac)">خروج</a></div>
+  <div class="sub"><b id="who"></b> · <a href="#" onclick="doLogout();return false" style="color:var(--ac)">خروج</a></div>
   <div id="msg"></div>
-  <div class="tabs"><button class="tab on" data-v="stock">انبار</button><button class="tab" data-v="hist">تاریخچه</button></div>
+  <div class="tabs"><button class="tab on" data-v="stock">انبار</button><button class="tab" data-v="hist">تاریخچه</button><button class="tab" data-v="users" id="tabU" style="display:none">کاربران</button></div>
 
   <div id="vStock">
     <div class="stats">
@@ -84,27 +101,43 @@ input,select{font:inherit;color:var(--tx);background:var(--card);border:1px soli
     </div>
     <input id="q" type="search" placeholder="جستجوی محصول…" autocomplete="off">
     <div class="chips" id="chips" style="margin-top:10px"></div>
-    <div class="meta" style="margin-bottom:8px">برای حذف یک محصول با کل موجودی‌اش، کارت آن را به سمت راست بکشید.</div>
+    <div class="meta" id="swhint" style="margin-bottom:8px">برای حذف یک محصول با کل موجودی‌اش، کارت آن را به سمت راست بکشید.</div>
     <div id="list"></div>
   </div>
 
   <div id="vHist" style="display:none">
-    <input id="hq" type="search" placeholder="جستجو در تاریخچه (نام محصول یا توضیح)…" autocomplete="off" style="margin-bottom:10px">
+    <input id="hq" type="search" placeholder="جستجو در تاریخچه (نام محصول، توضیح یا نام فرد)…" autocomplete="off" style="margin-bottom:10px">
     <div id="hlist"></div>
   </div>
+
+  <div id="vUsers" style="display:none">
+    <div id="uadd" style="display:none;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:600;margin-bottom:8px">افزودن کاربر</div>
+      <div class="f"><label>نام</label><input id="un" autocomplete="off"></div>
+      <div class="f"><label>ایمیل</label><input id="ue" type="email" dir="ltr" autocapitalize="none"></div>
+      <div class="g">
+        <div class="f"><label>رمز (حداقل ۶ حرف)</label><input id="up" type="text" dir="ltr" autocomplete="off"></div>
+        <div class="f"><label>نقش</label><select id="ur"></select></div>
+      </div>
+      <div class="btns"><button class="p" id="uab">ساخت کاربر</button></div>
+    </div>
+    <div id="ulist"></div>
+    <div id="bkw" style="display:none" class="btns"><button id="bk">⬇ پشتیبان‌گیری (فایل JSON)</button></div>
+  </div>
 </div>
-<button class="fab" id="add">＋ محصول جدید</button>
+<button class="fab" id="add" style="display:none">＋ محصول جدید</button>
+<div class="toast" id="toast"></div>
 
 <div class="sheet" id="sheet"><div class="panel">
   <h2 id="pt">محصول جدید</h2>
   <div class="f"><label>نام محصول</label><input id="fn" autocomplete="off"></div>
   <div class="f"><label>دسته‌بندی</label><input id="fc" list="cats" placeholder="مثلاً مواد اولیه، بسته‌بندی…" autocomplete="off"><datalist id="cats"></datalist></div>
   <div class="g">
-    <div class="f"><label>موجودی</label><input id="fq" type="number" inputmode="numeric" min="0" value="0"></div>
-    <div class="f"><label>حداقل موجودی (هشدار)</label><input id="fm" type="number" inputmode="numeric" min="0" value="0"></div>
+    <div class="f" id="fqw"><label>موجودی اولیه (اعشار مجاز)</label><input id="fq" type="number" inputmode="decimal" step="any" min="0" value="0"></div>
+    <div class="f"><label>حداقل موجودی (هشدار)</label><input id="fm" type="number" inputmode="decimal" step="any" min="0" value="0"></div>
   </div>
   <div class="g">
-    <div class="f"><label>واحد</label><input id="fu" value="عدد" autocomplete="off"></div>
+    <div class="f"><label>واحد (عدد، کیلو، لیتر…)</label><input id="fu" value="عدد" autocomplete="off"></div>
     <div class="f"><label>یادداشت / محل قفسه</label><input id="fo" autocomplete="off"></div>
   </div>
   <div class="btns"><button class="d" id="del" style="display:none">حذف</button><button id="cancel">انصراف</button><button class="p" id="save">ذخیره</button></div>
@@ -114,31 +147,49 @@ input,select{font:inherit;color:var(--tx);background:var(--card);border:1px soli
   <h2 id="mt">برداشت</h2>
   <div class="meta" id="mi" style="margin-bottom:10px"></div>
   <div class="g">
-    <div class="f"><label>تعداد</label><input id="ma" type="number" inputmode="numeric" min="1" value="1"></div>
+    <div class="f"><label>تعداد (اعشار مجاز)</label><input id="ma" type="number" inputmode="decimal" step="any" min="0" value="1"></div>
     <div class="f"><label>تاریخ</label><input id="md" type="date"></div>
   </div>
-  <div class="f"><label>توضیح (برای چه کاری / چه کسی برداشت)</label><input id="mn" autocomplete="off" placeholder="مثلاً ارسال سفارش آقای احمدی"></div>
+  <div class="f"><label>توضیح (برای چه کاری)</label><input id="mn" autocomplete="off" placeholder="مثلاً ارسال سفارش آقای احمدی"></div>
   <div class="btns"><button id="mc">انصراف</button><button class="p" id="ms">ثبت</button></div>
 </div></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// ====== اینجا را با اطلاعات پروژه‌ی Firebase خودتان عوض کنید ======
 const firebaseConfig={
   apiKey:"AIzaSyBs2HB8OVFBdNWXgEHKX-C0Zd8JOi10w-c",
   authDomain:"greendaily1380.firebaseapp.com",
   projectId:"greendaily1380",
   appId:"1:159838197443:web:88431d69791d4851fcb476"
 };
-// ===============================================================
-const fa=n=>Number(n).toLocaleString('fa-IR'), $=id=>document.getElementById(id);
+const ROLES={owner:'مدیر کل',manager:'مدیر شعبه',keeper:'مسئول انبار',accountant:'حسابدار'};
+const fa=n=>Number(n).toLocaleString('fa-IR',{maximumFractionDigits:3}), $=id=>document.getElementById(id);
 const fd=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('fa-IR',{year:'numeric',month:'long',day:'numeric'})}catch(e){return s}};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d.innerHTML};
-let me='';
-let pc=null,mc=null,items=[],moves=[],cat='all',editId=null,mv=null;
+const num=v=>{const x=parseFloat(String(v).replace(/[٠-٩۰-۹]/g,c=>'٠١٢٣٤٥٦٧٨٩'.includes(c)?'٠١٢٣٤٥٦٧٨٩'.indexOf(c):'۰۱۲۳۴۵۶۷۸۹'.indexOf(c)));return isNaN(x)?0:x};
+const r3=x=>Math.round(x*1000)/1000;
+let auth,db,pc,mc,uc,uid='',profile=null,me='';
+let items=[],moves=[],users=[],cat='all',editId=null,mv=null,started=false;
+const role=()=>profile?profile.role:'';
+const canWrite=()=>['owner','manager','keeper'].includes(role());
+const canDel=()=>['owner','manager'].includes(role());
 const msg=t=>{const m=$('msg');m.textContent=t;m.style.display=t?'block':'none'};
+let tt;function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',5000)}
+function errText(e){
+  const c=(e&&e.code)||'';
+  if(c==='insufficient')return 'موجودی کافی نیست. موجودی فعلی: '+fa(e.cur);
+  if(c.includes('permission-denied'))return 'دسترسی ندارید (permission-denied). نقش شما اجازه‌ی این کار را ندارد یا قوانین دیتابیس منتشر نشده.';
+  if(c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'||c==='auth/invalid-login-credentials')return 'ایمیل یا رمز اشتباه است.';
+  if(c==='auth/email-already-in-use')return 'این ایمیل قبلاً ثبت شده.';
+  if(c==='auth/weak-password')return 'رمز باید حداقل ۶ حرف باشد.';
+  if(c==='auth/invalid-email')return 'ایمیل معتبر نیست.';
+  if(c==='auth/operation-not-allowed')return 'ورود با ایمیل در Firebase فعال نشده (Authentication ← Sign-in method).';
+  if(c==='auth/network-request-failed'||c==='unavailable')return 'اینترنت یا اتصال به سرور مشکل دارد.';
+  return 'خطا: '+(c||(e&&e.message)||'نامشخص');
+}
 
 function render(){
   const q=$('q').value.trim(), cats=[...new Set(items.map(i=>i.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fa'));
@@ -147,16 +198,24 @@ function render(){
   $('cats').innerHTML=cats.map(c=>'<option value="'+esc(c)+'">').join('');
   $('sAll').textContent=fa(items.length);
   $('sLow').textContent=fa(items.filter(i=>i.min>0&&i.qty<=i.min).length);
+  const w=canWrite();
   const v=items.filter(i=>(!q||i.name.includes(q)||i.note.includes(q))&&(cat==='all'||i.cat===cat)).sort((a,b)=>a.name.localeCompare(b.name,'fa'));
   $('list').innerHTML=v.length?v.map(i=>{const L=i.min>0&&i.qty<=i.min;
-    return '<div class="sw"><div class="swl">🗑 حذف</div><div class="item'+(L?' low':'')+'" data-id="'+i.id+'"><div class="top"><div><div class="nm">'+esc(i.name)+'</div><div class="meta">'+(i.cat?'<span class="tag">'+esc(i.cat)+'</span>':'')+(L?'<b>⚠ کم‌موجود</b> · ':'')+'حداقل: '+fa(i.min)+(i.note?' · '+esc(i.note):'')+'</div></div><button class="ib" data-e="'+i.id+'">ویرایش</button></div>'+
-    '<div class="row"><div class="big">'+fa(i.qty)+' <small>'+esc(i.unit)+'</small></div><div class="acts"><button class="in" data-m="in" data-id="'+i.id+'">＋ ورود</button><button class="out" data-m="out" data-id="'+i.id+'">− برداشت</button></div></div></div></div>'}).join(''):'<div class="empty">'+(items.length?'موردی پیدا نشد':'هنوز محصولی ثبت نشده.<br>با دکمه «محصول جدید» شروع کنید.')+'</div>';
+    return '<div class="sw"><div class="swl">🗑 حذف</div><div class="item'+(L?' low':'')+'" data-id="'+i.id+'"><div class="top"><div><div class="nm">'+esc(i.name)+'</div><div class="meta">'+(i.cat?'<span class="tag">'+esc(i.cat)+'</span>':'')+(L?'<b>⚠ کم‌موجود</b> · ':'')+'حداقل: '+fa(i.min)+(i.note?' · '+esc(i.note):'')+'</div></div>'+(w?'<button class="ib" data-e="'+i.id+'">ویرایش</button>':'')+'</div>'+
+    '<div class="row"><div class="big">'+fa(i.qty)+' <small>'+esc(i.unit)+'</small></div>'+(w?'<div class="acts"><button class="in" data-m="in" data-id="'+i.id+'">＋ ورود</button><button class="out" data-m="out" data-id="'+i.id+'">− برداشت</button></div>':'')+'</div></div></div>'}).join(''):'<div class="empty">'+(items.length?'موردی پیدا نشد':'هنوز محصولی ثبت نشده.'+(w?'<br>با دکمه «محصول جدید» شروع کنید.':''))+'</div>';
   renderHist();
 }
 function renderHist(){
   const q=$('hq').value.trim();
-  const v=moves.filter(m=>!q||m.name.includes(q)||m.note.includes(q)).sort((a,b)=>(b.date.localeCompare(a.date))||(b.ts-a.ts));
+  const v=moves.filter(m=>!q||m.name.includes(q)||m.note.includes(q)||(m.by||'').includes(q)).sort((a,b)=>(b.date.localeCompare(a.date))||(b.ts-a.ts));
   $('hlist').innerHTML=v.length?v.map(m=>'<div class="h '+m.type+'"><div class="t"><span>'+esc(m.name)+'</span><span>'+(m.type==='out'?'−':'＋')+fa(m.amount)+' '+esc(m.unit)+'</span></div><div class="meta">'+(m.by?'<b>'+(m.type==='out'?'برداشت':'ورود')+' توسط '+esc(m.by)+'</b> · ':'')+fd(m.date)+(m.cat?' · '+esc(m.cat):'')+' · موجودی بعد: '+fa(m.after)+'</div>'+(m.note?'<div class="n">'+esc(m.note)+'</div>':'')+'</div>').join(''):'<div class="empty">هنوز تغییری ثبت نشده.</div>';
+}
+function renderUsers(){
+  const own=role()==='owner';
+  $('ulist').innerHTML=users.length?users.sort((a,b)=>(a.name||'').localeCompare(b.name||'','fa')).map(u=>{
+    const self=u.id===uid;
+    return '<div class="u'+(u.active?'':' off')+'"><div class="nm">'+esc(u.name)+(self?' (شما)':'')+'</div><div class="meta" dir="ltr" style="text-align:right">'+esc(u.email)+'</div>'+
+    (own&&!self?'<div class="r"><select data-ur="'+u.id+'">'+Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(u.role===k?' selected':'')+'>'+ROLES[k]+'</option>').join('')+'</select><button class="ib" data-ua="'+u.id+'" data-on="'+(u.active?1:0)+'">'+(u.active?'غیرفعال کن':'فعال کن')+'</button></div>':'<div class="meta">'+(ROLES[u.role]||u.role)+(u.active?'':' · غیرفعال')+'</div>')+'</div>'}).join(''):'<div class="empty">کاربری نیست.</div>';
 }
 
 function openMove(id,type){
@@ -169,82 +228,169 @@ function openMove(id,type){
   $('msheet').classList.add('open');setTimeout(()=>$('ma').select(),50);
 }
 async function saveMove(){
-  if(!mv||!pc)return;
-  const a=parseInt($('ma').value)||0, {it,type}=mv;
-  if(a<1){$('ma').focus();return}
-  if(type==='out'&&a>it.qty){alert('موجودی کافی نیست. موجودی فعلی: '+fa(it.qty));return}
-  const after=type==='out'?it.qty-a:it.qty+a, date=$('md').value||today(), note=$('mn').value.trim();
-  $('msheet').classList.remove('open');mv=null;
+  if(!mv)return;
+  const a=r3(num($('ma').value)), {it,type}=mv;
+  if(!(a>0)){$('ma').focus();return}
+  const date=$('md').value||today(), note=$('mn').value.trim();
   try{
-    await pc.doc(it.id).update({qty:after,updatedAt:Date.now()});
-    await mc.doc().set({pid:it.id,name:it.name,cat:it.cat,unit:it.unit,type,amount:a,after,date,note,by:me,ts:Date.now()});
-  }catch(e){msg('ذخیره نشد. دسترسی «Contributor» یا بالاتر لازم است.')}
+    await db.runTransaction(async tx=>{
+      const ref=pc.doc(it.id), s=await tx.get(ref);
+      if(!s.exists)throw {code:'not-found'};
+      const cur=+s.data().qty||0;
+      if(type==='out'&&a>cur+1e-9)throw {code:'insufficient',cur};
+      const after=r3(type==='out'?cur-a:cur+a);
+      tx.update(ref,{qty:after,updatedAt:Date.now()});
+      tx.set(mc.doc(),{pid:it.id,name:it.name,cat:it.cat,unit:it.unit,type,amount:a,after,date,note,by:me,byUid:uid,ts:Date.now()});
+    });
+    $('msheet').classList.remove('open');mv=null;toast('ثبت شد ✓');
+  }catch(e){toast(errText(e))}
 }
 
 function openSheet(it){
   editId=it?it.id:null;$('pt').textContent=it?'ویرایش محصول':'محصول جدید';
-  $('fn').value=it?it.name:'';$('fc').value=it?it.cat:'';$('fq').value=it?it.qty:0;$('fm').value=it?it.min:0;
-  $('fu').value=it?it.unit:'عدد';$('fo').value=it?it.note:'';$('del').style.display=it?'block':'none';
+  $('fn').value=it?it.name:'';$('fc').value=it?it.cat:'';$('fq').value=0;$('fm').value=it?it.min:0;
+  $('fqw').style.display=it?'none':'block';
+  $('fu').value=it?it.unit:'عدد';$('fo').value=it?it.note:'';$('del').style.display=(it&&canDel())?'block':'none';
   $('sheet').classList.add('open');if(!it)setTimeout(()=>$('fn').focus(),50);
 }
 async function save(){
   const name=$('fn').value.trim();if(!name){$('fn').focus();return}
-  if(!pc){msg('اتصال به پایگاه داده برقرار نیست.');return}
-  const d={name,cat:$('fc').value.trim(),qty:Math.max(0,parseInt($('fq').value)||0),min:Math.max(0,parseInt($('fm').value)||0),unit:$('fu').value.trim()||'عدد',note:$('fo').value.trim(),updatedAt:Date.now()};
-  $('sheet').classList.remove('open');
-  try{editId?await pc.doc(editId).update(d):await pc.doc().set(d)}catch(e){msg('ذخیره نشد. دسترسی نوشتن لازم است.')}
+  const d={name,cat:$('fc').value.trim(),min:Math.max(0,r3(num($('fm').value))),unit:$('fu').value.trim()||'عدد',note:$('fo').value.trim(),updatedAt:Date.now()};
+  try{
+    if(editId){await pc.doc(editId).update(d)}
+    else{
+      const q0=Math.max(0,r3(num($('fq').value)));d.qty=q0;
+      const b=db.batch(), ref=pc.doc();b.set(ref,d);
+      if(q0>0)b.set(mc.doc(),{pid:ref.id,name:d.name,cat:d.cat,unit:d.unit,type:'in',amount:q0,after:q0,date:today(),note:'موجودی اولیه',by:me,byUid:uid,ts:Date.now()});
+      await b.commit();
+    }
+    $('sheet').classList.remove('open');toast('ذخیره شد ✓');
+  }catch(e){toast(errText(e))}
 }
 async function remove(){
   if(!editId||!confirm('این محصول حذف شود؟ (تاریخچه‌اش می‌ماند)'))return;
-  const id=editId;$('sheet').classList.remove('open');
-  try{await pc.doc(id).delete()}catch(e){msg('حذف نشد.')}
+  const id=editId;
+  try{await pc.doc(id).delete();$('sheet').classList.remove('open')}catch(e){toast(errText(e))}
+}
+async function delItem(id){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  if(!confirm('«'+it.name+'» با کل موجودی ('+fa(it.qty)+' '+it.unit+') حذف شود؟ (تاریخچه‌اش می‌ماند)'))return;
+  try{await pc.doc(id).delete();toast('حذف شد')}catch(e){toast(errText(e))}
+}
+
+async function addUser(){
+  const name=$('un').value.trim(),email=$('ue').value.trim(),pass=$('up').value,r=$('ur').value;
+  if(!name||!email||pass.length<6){toast('نام، ایمیل و رمز (حداقل ۶ حرف) را وارد کنید.');return}
+  try{
+    const sec=firebase.apps.find(a=>a.name==='sec')||firebase.initializeApp(firebaseConfig,'sec');
+    const cred=await sec.auth().createUserWithEmailAndPassword(email,pass);
+    await sec.auth().signOut();
+    await uc.doc(cred.user.uid).set({name,email,role:r,active:true,createdAt:Date.now()});
+    $('un').value='';$('ue').value='';$('up').value='';toast('کاربر ساخته شد ✓');
+  }catch(e){toast(errText(e))}
+}
+async function backup(){
+  try{
+    const [p,m,u]=await Promise.all([pc.get(),mc.get(),uc.get()]);
+    const pack=d=>d.docs.map(x=>Object.assign({id:x.id},x.data()));
+    const data={exportedAt:new Date().toISOString(),products:pack(p),moves:pack(m),users:pack(u).map(x=>({id:x.id,name:x.name,email:x.email,role:x.role,active:x.active}))};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const file=new File([blob],'green-daily-backup-'+today()+'.json',{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]})}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();a.remove()}
+  }catch(e){if(e&&e.name!=='AbortError')toast(errText(e))}
 }
 
 $('list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.m)openMove(b.dataset.id,b.dataset.m);else if(b.dataset.e)openSheet(items.find(x=>x.id===b.dataset.e))});
 $('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b){cat=b.dataset.c;render()}});
+$('ulist').addEventListener('change',async e=>{const s=e.target.closest('select');if(!s||!s.dataset.ur)return;try{await uc.doc(s.dataset.ur).update({role:s.value});toast('نقش تغییر کرد')}catch(x){toast(errText(x))}});
+$('ulist').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b||!b.dataset.ua)return;try{await uc.doc(b.dataset.ua).update({active:b.dataset.on!=='1'})}catch(x){toast(errText(x))}});
 let sx=0,sy=0,sel=null,dx=0;
-$('list').addEventListener('touchstart',e=>{const it=e.target.closest('.item');if(!it){sel=null;return}sel=it;sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;it.style.transition='none'},{passive:true});
+$('list').addEventListener('touchstart',e=>{const it=e.target.closest('.item');if(!it||!canDel()){sel=null;return}sel=it;sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;it.style.transition='none'},{passive:true});
 $('list').addEventListener('touchmove',e=>{if(!sel)return;const x=e.touches[0].clientX-sx,y=e.touches[0].clientY-sy;if(dx===0&&Math.abs(y)>Math.abs(x)){sel=null;return}dx=Math.max(0,x);sel.style.transform='translateX('+dx+'px)'},{passive:true});
 $('list').addEventListener('touchend',async()=>{if(!sel)return;const it=sel;sel=null;it.style.transition='transform .2s';it.style.transform='';const go=dx>110;dx=0;if(go)await delItem(it.dataset.id)});
-async function delItem(id){const it=items.find(x=>x.id===id);if(!it||!pc)return;if(!confirm('«'+it.name+'» با کل موجودی ('+fa(it.qty)+' '+it.unit+') حذف شود؟ (تاریخچه‌اش می‌ماند)'))return;try{await pc.doc(id).delete()}catch(e){msg('حذف نشد. دسترسی نوشتن لازم است.')}}
 $('add').onclick=()=>openSheet(null);
 $('cancel').onclick=()=>$('sheet').classList.remove('open');
 $('mc').onclick=()=>$('msheet').classList.remove('open');
-$('save').onclick=save;$('del').onclick=remove;$('ms').onclick=saveMove;
+$('save').onclick=save;$('del').onclick=remove;$('ms').onclick=saveMove;$('uab').onclick=addUser;$('bk').onclick=backup;
 $('q').oninput=render;$('hq').oninput=renderHist;
 for(const s of ['sheet','msheet'])$(s).addEventListener('click',e=>{if(e.target===$(s))$(s).classList.remove('open')});
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-  const h=t.dataset.v==='hist';$('vStock').style.display=h?'none':'block';$('vHist').style.display=h?'block':'none';$('add').style.display=h?'none':'block';
+  const v=t.dataset.v;$('vStock').style.display=v==='stock'?'block':'none';$('vHist').style.display=v==='hist'?'block':'none';$('vUsers').style.display=v==='users'?'block':'none';
+  $('add').style.display=(v==='stock'&&canWrite())?'block':'none';
 });
 render();
 
+function gate(mode,txt){
+  $('gate').style.display=mode?'flex':'none';
+  for(const k of ['gl','gs','gp'])$(k).style.display=(k===mode)?'block':'none';
+  if(txt)$('gptxt').textContent=txt;
+}
+function doLogout(){auth.signOut().then(()=>location.reload())}
+async function login(){
+  $('lerr').textContent='';
+  try{await auth.signInWithEmailAndPassword($('le').value.trim(),$('lp').value)}
+  catch(e){$('lerr').textContent=errText(e)}
+}
+async function signup(){
+  $('lerr').textContent='';
+  const em=$('le').value.trim(),pw=$('lp').value;
+  if(!em||pw.length<6){$('lerr').textContent='ایمیل و رمز (حداقل ۶ حرف) را وارد کنید.';return}
+  try{await auth.createUserWithEmailAndPassword(em,pw)}
+  catch(e){$('lerr').textContent=errText(e)}
+}
+async function setupOwner(){
+  const name=$('sn').value.trim();if(!name){$('serr').textContent='نام را وارد کنید.';return}
+  const u=auth.currentUser;
+  try{
+    const b=db.batch();
+    b.set(db.collection('config').doc('setup'),{by:u.uid,at:Date.now()});
+    b.set(uc.doc(u.uid),{name,email:u.email||'',role:'owner',active:true,createdAt:Date.now()});
+    await b.commit();location.reload();
+  }catch(e){$('serr').textContent=errText(e)}
+}
+async function onUser(u){
+  if(!u){gate('gl');return}
+  uid=u.uid;
+  try{
+    const snap=await uc.doc(uid).get();
+    if(snap.exists){
+      profile=snap.data();
+      if(!profile.active){gate('gp','حساب شما غیرفعال شده. با مدیر تماس بگیرید.');return}
+      me=profile.name||u.email;startApp();return;
+    }
+    const cfg=await db.collection('config').doc('setup').get();
+    if(!cfg.exists)gate('gs');
+    else gate('gp','حساب شما ('+u.email+') هنوز توسط مدیر فعال نشده. از مدیر بخواهید شما را از بخش «کاربران» اضافه کند.');
+  }catch(e){gate('gp',errText(e))}
+}
 function startApp(){
-  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.startsWith('PASTE')){msg('تنظیمات Firebase هنوز وارد نشده. فایل را باز کنید و بخش firebaseConfig را پر کنید.');return}
-  try{
-    firebase.initializeApp(firebaseConfig);const db=firebase.firestore();
-    pc=db.collection('products');mc=db.collection('moves');
-    pc.onSnapshot(s=>{items=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',qty:+x.qty||0,min:+x.min||0,unit:x.unit||'عدد',note:x.note||''}});msg('');render()},()=>msg('خطا در بارگذاری داده‌ها. قوانین (Rules) دیتابیس را بررسی کنید.'));
-    mc.onSnapshot(s=>{moves=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',unit:x.unit||'',type:x.type==='in'?'in':'out',amount:+x.amount||0,after:+x.after||0,date:x.date||'',note:x.note||'',by:x.by||'',ts:+x.ts||0}});renderHist()},()=>{});
-  }catch(e){msg('اتصال به دیتابیس ممکن نشد.')}
+  if(started)return;started=true;
+  gate(null);
+  $('who').textContent=me+' · '+(ROLES[role()]||'');
+  if(canWrite())$('add').style.display='block';
+  if(!canDel())$('swhint').style.display='none';
+  if(['owner','manager'].includes(role())){
+    $('tabU').style.display='block';
+    uc.onSnapshot(s=>{users=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderUsers()},e=>toast(errText(e)));
+  }
+  if(role()==='owner'){
+    $('uadd').style.display='block';$('bkw').style.display='flex';
+    $('ur').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'">'+ROLES[k]+'</option>').join('');
+  }
+  pc.onSnapshot(s=>{items=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',qty:+x.qty||0,min:+x.min||0,unit:x.unit||'عدد',note:x.note||''}});msg('');render()},e=>msg(errText(e)));
+  mc.onSnapshot(s=>{moves=s.docs.map(d=>{const x=d.data()||{};return{id:d.id,name:x.name||'',cat:x.cat||'',unit:x.unit||'',type:x.type==='in'?'in':'out',amount:+x.amount||0,after:+x.after||0,date:x.date||'',note:x.note||'',by:x.by||'',ts:+x.ts||0}});renderHist()},e=>msg(errText(e)));
 }
-const AUTH_HASH="6c78056f59a8906922865033621742164a1fba6b42a29304a22b4432a9bd8df9";
-async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function unlock(){$('login').style.display='none';$('who').textContent=me;startApp()}
-async function tryLogin(){
-  const u=$('lu').value.trim().toLowerCase(),p=$('lp').value,nm=$('ln').value.trim();
-  if(!nm){$('le').textContent='لطفاً نام خود را وارد کنید.';return}
-  try{
-    if(await sha(u+':'+p)===AUTH_HASH){me=nm;try{localStorage.setItem('gd_ok',AUTH_HASH);localStorage.setItem('gd_name',nm)}catch(e){}$('le').textContent='';unlock()}
-    else $('le').textContent='نام کاربری یا رمز اشتباه است.';
-  }catch(e){$('le').textContent='این مرورگر پشتیبانی نمی‌کند. از Safari یا Chrome استفاده کنید.'}
-}
-function logout(){try{localStorage.removeItem('gd_ok')}catch(e){}location.reload()}
-$('lb').onclick=tryLogin;$('lp').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin()});
-$('lo').onclick=logout;
-let ok=false;try{ok=localStorage.getItem('gd_ok')===AUTH_HASH;me=localStorage.getItem('gd_name')||'';$('ln').value=me}catch(e){}
-if(ok&&me)unlock();
+try{
+  firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth();db=firebase.firestore();
+  pc=db.collection('products');mc=db.collection('moves');uc=db.collection('users');
+  $('lb').onclick=login;$('lsu').onclick=signup;$('sb').onclick=setupOwner;
+  $('lp').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  auth.onAuthStateChanged(onUser);
+}catch(e){gate('gp','اتصال به Firebase ممکن نشد: '+(e.message||e))}
 </script>
 </body>
 </html>
